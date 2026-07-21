@@ -1,29 +1,25 @@
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-import './App.css'
-import Header from './components/header'
-import { BrowserRouter, Route, Routes } from 'react-router'
-import Home from './pages/home'
+import DashboardLayout from './components/dashboard/DashboardLayout.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Upload from './pages/Upload.jsx'
+import Reports from './pages/Reports.jsx'
+import ReportDetail from './pages/ReportDetail.jsx'
+import Chat from './pages/Chat.jsx'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <div>
-      <Header />
-      <BrowserRouter>
-        <Routes>
-          <Route path='/home' element={<Home />} > </Route>
-        </Routes>
-
-
-      </BrowserRouter>
-
-
-
-      <h2> WELCOME TO MED SCAN</h2>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/upload" element={<Upload />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports/:id" element={<ReportDetail />} />
+          <Route path="/chat" element={<Chat />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App
