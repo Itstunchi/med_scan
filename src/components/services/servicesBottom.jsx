@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   HeartPulse,
   Brain,
@@ -21,6 +22,8 @@ import {
 import "./services.css";
 
 function Specialists() {
+  const [search, setSearch] = useState("");
+
   const specialists = [
     { id: 1, name: "Cardiologist", description: "Heart Specialist", icon: HeartPulse },
     { id: 2, name: "Neurologist", description: "Brain Specialist", icon: Brain },
@@ -42,6 +45,12 @@ function Specialists() {
     { id: 18, name: "Pathologist", description: "Laboratory & Disease Specialist", icon: Microscope },
   ];
 
+  const filteredSpecialists = specialists.filter(
+    (specialist) =>
+      specialist.name.toLowerCase().includes(search.toLowerCase()) ||
+      specialist.description.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="specialists-page">
       <section className="specialists-header">
@@ -57,11 +66,13 @@ function Specialists() {
           type="text"
           placeholder="🔍 Search for a specialist..."
           className="specialists-search-bar"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </section>
 
       <section className="specialists">
-        {specialists.map((specialist) => {
+        {filteredSpecialists.map((specialist) => {
           const Icon = specialist.icon;
 
           return (
@@ -76,6 +87,12 @@ function Specialists() {
             </div>
           );
         })}
+
+        {filteredSpecialists.length === 0 && (
+          <p className="no-results">
+            No specialist found.
+          </p>
+        )}
       </section>
     </div>
   );
