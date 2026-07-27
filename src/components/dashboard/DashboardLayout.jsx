@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Activity, LayoutDashboard, Upload, FileText, MessageSquare, Menu, X } from 'lucide-react'
+import { Settings as SettingsIcon } from "lucide-react";
 
 const navItems = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/reports', label: 'Reports', icon: FileText },
   { to: '/upload', label: 'Upload', icon: Upload },
   { to: '/chat', label: 'AI Chat', icon: MessageSquare },
+  { to: "Settings", path: "/settings", icon: SettingsIcon },
 ]
 
 export default function DashboardLayout() {
@@ -21,7 +23,7 @@ export default function DashboardLayout() {
         />
       )}
 
-      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-sm">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-gradient shadow-teal">
