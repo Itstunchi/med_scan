@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import DashboardLayout from './components/dashboard/DashboardLayout.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -23,8 +23,11 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="/dashboard" element={<Navigate to="/dashboard" replace />} />
+<<<<<<< HEAD
         <Route path="/" element={<Home/> }/>
+=======
+>>>>>>> 1f694a9ece3db9f536d30a5a1f2927471ab40de4
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

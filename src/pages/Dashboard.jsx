@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Activity, FileText, Upload, MessageSquare, Stethoscope, Calendar, HeartPulse, Brain, Wind, Eye, Ear, Utensils, ChevronRight, Plus, Clock, CheckCircle2, ArrowRight, Lightbulb } from 'lucide-react'
+import { Activity, FileText, Upload, MessageSquare, Stethoscope, Calendar, HeartPulse, Brain, Wind, Eye, Ear, Utensils, ChevronRight, Plus, Clock, CheckCircle2, ArrowRight, Lightbulb, Sun, Moon, Sunrise, ShieldCheck, Sparkles } from 'lucide-react'
 
 const bodyParts = [
   {
@@ -82,10 +82,36 @@ const mockAppointments = [
   { id: '2', title: 'Annual Eye Exam', date: '2026-08-03', time: '2:30 PM' },
 ]
 
+const dailyTips = [
+  'Staying hydrated helps regulate body temperature and supports every organ system.',
+  'A 10-minute walk after meals can help stabilize blood sugar levels.',
+  'Consistent sleep and wake times improve sleep quality more than total hours alone.',
+  'Deep breathing for 2 minutes can lower stress hormones almost immediately.',
+]
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return { text: 'Good morning', icon: Sunrise }
+  if (hour < 18) return { text: 'Good afternoon', icon: Sun }
+  return { text: 'Good evening', icon: Moon }
+}
+
 export default function Dashboard() {
   const [activeBodyPart, setActiveBodyPart] = useState(0)
   const [recentReports] = useState(mockRecentReports)
   const [appointments] = useState(mockAppointments)
+  const [greeting, setGreeting] = useState(getGreeting())
+  const [tipIndex, setTipIndex] = useState(0)
+
+  useEffect(() => {
+    const greetingInterval = setInterval(() => setGreeting(getGreeting()), 60000)
+    return () => clearInterval(greetingInterval)
+  }, [])
+
+  useEffect(() => {
+    const tipInterval = setInterval(() => setTipIndex((prev) => (prev + 1) % dailyTips.length), 8000)
+    return () => clearInterval(tipInterval)
+  }, [])
 
   const stats = {
     total: recentReports.length,
@@ -96,15 +122,29 @@ export default function Dashboard() {
   const active = bodyParts[activeBodyPart]
   const ActiveIcon = active.icon
   const displayName = 'there'
+  const GreetingIcon = greeting.icon
 
   return (
     <div className="space-y-5 sm:space-y-6 px-4 sm:px-0 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Welcome back, {displayName}</h1>
+          <div className="flex items-center gap-2">
+            <GreetingIcon className="h-5 w-5 text-amber-500" />
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{greeting.text}, {displayName}</h1>
+          </div>
           <p className="mt-1 text-sm text-slate-500">Here's your health overview for today.</p>
         </div>
         <Link to="/upload" className="btn-primary w-full sm:w-auto justify-center"><Plus className="h-4 w-4" /> Upload Report</Link>
+      </div>
+
+      <div className="flex items-center gap-3 rounded-2xl bg-teal-gradient p-3.5 sm:p-4 text-white shadow-teal">
+        <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-teal-100">Tip of the moment</p>
+          <p key={tipIndex} className="mt-0.5 text-sm text-white animate-fade-in">{dailyTips[tipIndex]}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-4">
@@ -232,6 +272,21 @@ export default function Dashboard() {
         <QuickLink to="/chat" icon={MessageSquare} title="AI Assistant" desc="Ask health questions" gradient="bg-slate-gradient" />
         <QuickLink to="/services" icon={Stethoscope} title="Health Services" desc="Explore specialties" gradient="bg-coral-gradient" />
       </div>
+
+      <footer className="border-t border-slate-200 pt-5 sm:pt-6 pb-2">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-gradient">
+              <Activity className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span>© {new Date().getFullYear()} MediScan. All rights reserved.</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
+            <span>Your health data is encrypted and private.</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
@@ -262,3 +317,4 @@ function QuickLink({ to, icon: Icon, title, desc, gradient }) {
     </Link>
   )
 }
+
