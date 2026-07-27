@@ -6,6 +6,7 @@ import Upload from './pages/Upload.jsx'
 import Reports from './pages/Reports.jsx'
 import ReportDetail from './pages/ReportDetail.jsx'
 import Chat from './pages/Chat.jsx'
+import Services from './pages/services.jsx'
 
 export default function App() {
   return (
@@ -17,7 +18,10 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/reports/:id" element={<ReportDetail />} />
           <Route path="/chat" element={<Chat />} />
+           <Route path="/service" element={<Services />} />
+
         </Route>
+       
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
