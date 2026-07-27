@@ -8,6 +8,7 @@ import ReportDetail from './pages/ReportDetail.jsx'
 import Chat from './pages/Chat.jsx'
 import Bottom from './components/dashboard//settings/Bottom.jsx'
 import SettingsPage from './pages/settings.jsx'
+import Home from './pages/home.jsx'
 
 export default function App() {
   return (
@@ -22,6 +23,10 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="/dashboard" element={<Navigate to="/dashboard" replace />} />
+<<<<<<< HEAD
+        <Route path="/" element={<Home/> }/>
+=======
+>>>>>>> 1f694a9ece3db9f536d30a5a1f2927471ab40de4
       </Routes>
     </BrowserRouter>
   );
