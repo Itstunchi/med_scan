@@ -1,29 +1,36 @@
 import { useState } from 'react'
+import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-import './App.css'
-import Header from './components/header'
-import { BrowserRouter, Route, Routes } from 'react-router'
-import Home from './pages/home'
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Home from "./pages/home";
+import Header from "./components/header";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div>
-      <Header />
-      <BrowserRouter>
-        <Routes>
-          <Route path='/home' element={<Home />} > </Route>
-        </Routes>
+    <BrowserRouter>
+      <Routes>
 
+  <Route path="/" element={<Login />} />
 
-      </BrowserRouter>
+  <Route path="/login" element={<Login />} />
 
+  <Route path="/register" element={<Register />} />
 
+  <Route
+    path="/home"
+    element={
+      <>
+        <Header />
+        <Home />
+      </>
+    }
+  />
 
-      <h2> WELCOME TO MED SCAN</h2>
-    </div>
-  )
+</Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App
