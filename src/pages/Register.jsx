@@ -178,7 +178,7 @@ return (
     <div className="login-right">
       <img src={doctorImage} alt="doctor" />
 
-      <div className="overlay">
+      <div className="register-overlay">
         <h2>Welcome to MediScan AI</h2>
 
         <ul>

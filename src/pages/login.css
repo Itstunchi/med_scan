@@ -5,8 +5,7 @@ box-sizing:border-box;
 font-family:'Segoe UI',sans-serif;
 }
 
-
-.login-page{
+.jp-login-page{
 display:flex;
 height:100vh;
 overflow:hidden;
@@ -14,8 +13,7 @@ background:linear-gradient(135deg,#eef5ff,#ffffff);
 animation:fadeIn .5s ease;
 }
 
-
-.login-left{
+.jp-login-left{
 width:42%;
 background:white;
 padding:70px;
@@ -25,7 +23,7 @@ justify-content:center;
 animation:slideLeft .8s;
 }
 
-.logo{
+.jp-login-logo{
 display:flex;
 align-items:center;
 gap:15px;
@@ -33,45 +31,45 @@ margin-bottom:35px;
 margin-top:-60px;
 }
 
-.logo-icon{
+.jp-logo-icon{
 font-size:38px;
 color:#2563eb;
 }
 
-.logo h2{
+.jp-login-logo h2{
 color:#2563eb;
 font-size:32px;
 }
 
-.logo span{
+.jp-login-logo span{
 color:#64748b;
 font-size:14px;
 }
 
-.login-content h1{
+.jp-login-content h1{
 font-size:48px;
 color:#1e293b;
 margin-bottom:10px;
 }
 
-.login-content p{
+.jp-login-content p{
 color:#64748b;
 margin-bottom:35px;
 }
 
-.input-box{
+.jp-input-box{
 position:relative;
 margin-bottom:22px;
 }
 
-.input-icon{
+.jp-input-icon{
 position:absolute;
 left:18px;
 top:18px;
 color:#94a3b8;
 }
 
-.eye-icon{
+.jp-eye-icon{
 position:absolute;
 right:18px;
 top:18px;
@@ -79,24 +77,24 @@ cursor:pointer;
 color:#94a3b8;
 }
 
-.input-box input{
+.jp-input-box input{
 width:100%;
 padding:18px 50px;
 border:1px solid #dbe4f0;
-background: white;
+background:white;
 border-radius:15px;
 font-size:16px;
 transition:.3s;
 }
 
-.input-box input:focus{
+.jp-input-box input:focus{
 outline:none;
 background:white;
 box-shadow:0 0 0 2px #2563eb;
-transform: translate(-2px);
+transform:translateY(-2px);
 }
 
-.login-options{
+.jp-login-options{
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -105,18 +103,18 @@ margin-bottom:30px;
 font-size:14px;
 }
 
-.login-options label{
+.jp-login-options label{
 display:flex;
 align-items:center;
 gap:8px;
 }
 
-.login-options a{
+.jp-login-options a{
 color:#2563eb;
 text-decoration:none;
 }
 
-.login-btn{
+.jp-login-btn{
 width:100%;
 padding:18px;
 border:none;
@@ -124,29 +122,28 @@ border-radius:15px;
 background:linear-gradient(135deg,#2563eb,#4f8cff);
 color:white;
 font-size:18px;
-font-weight: 600;
+font-weight:600;
 cursor:pointer;
 transition:.3s;
 box-shadow:0 12px 30px rgba(37,99,235,.35);
 }
 
-.login-btn:hover{
+.jp-login-btn:hover{
 transform:translateY(-5px);
 box-shadow:0 18px 35px rgba(37,99,235,.45);
 }
 
-.login-btn:active{
-    transform:scale(.98);
+.jp-login-btn:active{
+transform:scale(.98);
 }
 
-
-.divider{
+.jp-divider{
 text-align:center;
 margin:30px 0;
 color:#94a3b8;
 }
 
-.google-btn{
+.jp-google-btn{
 width:100%;
 padding:16px;
 border-radius:15px;
@@ -161,29 +158,29 @@ font-size:15px;
 transition:.3s;
 }
 
-.google-btn:hover{
+.jp-google-btn:hover{
 background:#f8fafc;
 }
 
-.register-link{
+.jp-register-link{
 margin-top:30px;
 text-align:center;
 }
 
-.register-link a{
+.jp-register-link a{
 color:#2563eb;
 font-weight:bold;
 text-decoration:none;
 }
 
-.login-right{
+.jp-login-right{
 width:55%;
-padding: 20px 20px 20px 0;
+padding:20px 20px 20px 0;
 position:relative;
 overflow:hidden;
 }
 
-.login-right img{
+.jp-login-right img{
 width:100%;
 height:100%;
 object-fit:cover;
@@ -191,8 +188,7 @@ object-position:center;
 border-radius:35px;
 }
 
-
-.overlay{
+.jp-login-overlay{
 position:absolute;
 bottom:40px;
 left:40px;
@@ -203,11 +199,11 @@ color:white;
 backdrop-filter:blur(10px);
 }
 
-.overlay h2{
+.jp-login-overlay h2{
 margin-bottom:15px;
 }
 
-.overlay ul{
+.jp-login-overlay ul{
 list-style:none;
 line-height:2;
 }
@@ -234,30 +230,30 @@ opacity:1;
 
 @media(max-width:900px){
 
-.login-page{
+.jp-login-page{
 flex-direction:column;
 }
 
-.login-left,
-.login-right{
+.jp-login-left,
+.jp-login-right{
 width:100%;
 }
 
-.login-right{
+.jp-login-right{
 display:none;
 }
 
-.login-left{
+.jp-login-left{
 padding:40px 30px;
 }
 
-.login-content h1{
+.jp-login-content h1{
 font-size:38px;
 }
 
 }
 
 input::-ms-reveal,
-input::-ms-clear {
-    display: none;
+input::-ms-clear{
+display:none;
 }

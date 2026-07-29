@@ -14,9 +14,11 @@ import { Link } from "react-router-dom";
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const handleGoogleSignIn = () => {
     alert("Google Sign-In will be connected to Firebase.");
   };
+
   const handleRegister = (e) => {
     e.preventDefault();
 
@@ -27,47 +29,49 @@ const Login = () => {
       alert("✅ Account created successfully!");
     }, 2000);
   };
+
   return (
-    <div className="login-page">
-      <div className="login-left">
-        <div className="logo">
-          <FaHeartbeat className="logo-icon" />
+    <div className="jp-login-page">
+      <div className="jp-login-left">
+        <div className="jp-login-logo">
+          <FaHeartbeat className="jp-logo-icon" />
           <div>
             <h2>MediScan AI</h2>
             <span>AI Healthcare Platform</span>
           </div>
         </div>
 
-        <div className="login-content">
+        <div className="jp-login-content">
           <h1>Medi-Scan</h1>
           <p>Sign in to access AI-powered healthcare services.</p>
 
           <form onSubmit={handleRegister}>
-            <div className="input-box">
-              <FaEnvelope className="input-icon" />
+            <div className="jp-input-box">
+              <FaEnvelope className="jp-input-icon" />
               <input type="email" placeholder="Enter your email" />
             </div>
 
-            <div className="input-box">
-              <FaLock className="input-icon" />
+            <div className="jp-input-box">
+              <FaLock className="jp-input-icon" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
               />
+
               {showPassword ? (
                 <FaEyeSlash
-                  className="eye-icon"
+                  className="jp-eye-icon"
                   onClick={() => setShowPassword(false)}
                 />
               ) : (
                 <FaEye
-                  className="eye-icon"
+                  className="jp-eye-icon"
                   onClick={() => setShowPassword(true)}
                 />
               )}
             </div>
 
-            <div className="login-options">
+            <div className="jp-login-options">
               <label>
                 <input type="checkbox" />
                 Remember Me
@@ -76,32 +80,34 @@ const Login = () => {
               <a href="#">Forgot Password?</a>
             </div>
 
-            <button className="login-btn">Sign In</button>
+            <button className="jp-login-btn">
+              {loading ? "Signing In..." : "Sign In"}
+            </button>
           </form>
 
-          <div className="divider">
+          <div className="jp-divider">
             <span>OR</span>
           </div>
 
           <button
             type="button"
-            className="google-btn"
+            className="jp-google-btn"
             onClick={handleGoogleSignIn}
           >
             <FaGoogle />
             Continue with Google
           </button>
 
-          <p className="register-link">
+          <p className="jp-register-link">
             Don't have an account? <Link to="/register">Register</Link>
           </p>
         </div>
       </div>
 
-      <div className="login-right">
+      <div className="jp-login-right">
         <img src={doctorImage} alt="doctor" />
 
-        <div className="overlay">
+        <div className="jp-login-overlay">
           <h2>AI-Powered Healthcare</h2>
 
           <ul>

@@ -114,7 +114,7 @@ color:#2563eb;
 text-decoration:none;
 }
 
-.login-btn{
+.jplogin-btn{
 width:100%;
 padding:18px;
 border:none;
@@ -186,7 +186,7 @@ border-radius:35px;
 }
 
 
-.overlay{
+.register-overlay{
 position:absolute;
 bottom:40px;
 left:40px;
@@ -197,11 +197,11 @@ color:white;
 backdrop-filter:blur(10px);
 }
 
-.overlay h2{
+.register-overlay h2{
 margin-bottom:15px;
 }
 
-.overlay ul{
+.register-overlay ul{
 list-style:none;
 line-height:2;
 }
