@@ -9,6 +9,8 @@ import Chat from './pages/Chat.jsx'
 import SettingsPage from './pages/settings.jsx'
 import Home from './pages/home.jsx'
 import Services from './pages/services.jsx'
+import Login from './pages/login.jsx'
+import Register from './pages/Register.jsx'
 import { useAuth } from './lib/auth.jsx'
 import FullScreenLoader from './components/FullScreenLoader.jsx'
 
@@ -31,6 +33,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
         <Route
           element={
