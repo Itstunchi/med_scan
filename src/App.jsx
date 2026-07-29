@@ -10,6 +10,8 @@ import Bottom from './components/dashboard//settings/Bottom.jsx'
 import SettingsPage from './pages/settings.jsx'
 import Home from './pages/home.jsx'
 import Services from "./pages/services.jsx";
+import Login from "./pages/login.jsx";
+import Register from "./pages/Register.jsx";
 
 export default function App() {
   return (
@@ -26,6 +28,9 @@ export default function App() {
         </Route>
         <Route path="/dashboard" element={<Navigate to="/dashboard" replace />} />
         <Route path="/" element={<Home/> }/>
+        <Route path="/login" element={<Login/> }/>
+        <Route path="/register" element={<Register/> }/>
+
       </Routes>
     </BrowserRouter>
   );
