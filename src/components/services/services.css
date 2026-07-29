@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* DON'T style body or * here */
+
+.specialists-page{
+    background:#f5f8fc;
+    min-height:100vh;
+    font-family:"Poppins",sans-serif;
+}
+
+.specialists-page *{
+    box-sizing:border-box;
+}
+
+.specialists-header{
+    text-align:center;
+    padding:80px 10%;
+    background:linear-gradient(135deg,#0F766E,#14B8A6);
+    color:white;
+}
+
+.specialists-header h1{
+    font-size:3rem;
+    margin-bottom:15px;
+}
+
+.specialists-header p{
+    width:700px;
+    max-width:100%;
+    margin:auto;
+    line-height:1.8;
+    font-size:17px;
+    margin-bottom:35px;
+}
+
+.specialists-search-bar{
+    width:450px;
+    max-width:100%;
+    padding:14px 18px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    outline:none;
+}
+
+.specialists{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:45px;
+    padding:70px 8%;
+}
+
+.specialist-card{
+    width:280px;
+    background:#ffffff;
+    border-radius:18px;
+    padding:30px 25px;
+    text-align:center;
+    box-shadow:0 8px 25px rgba(15,118,110,.10);
+    transition:.4s;
+    cursor:pointer;
+}
+
+.specialist-card:hover{
+    transform:translateY(-12px);
+    box-shadow:0 20px 40px rgba(15,118,110,.18);
+}
+
+.specialist-icon{
+    color:#0F766E;
+    margin-bottom:20px;
+    transition:.4s;
+}
+
+.specialist-card:hover .specialist-icon{
+    transform:scale(1.15) rotate(8deg);
+    color:#14B8A6;
+}
+
+.specialist-card h2{
+    font-size:1.3rem;
+    color:#1E293B;
+    margin-bottom:12px;
+}
+
+.specialist-card p{
+    color:#64748B;
+    line-height:1.6;
+    margin-bottom:25px;
+    font-size:15px;
+}
+
+.specialist-card button{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#0F766E;
+    color:white;
+    font-size:15px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.specialist-card button:hover{
+    background:#115E59;
+}
+
+@media (max-width:768px){
+
+    .specialists-header{
+        padding:60px 6%;
+    }
+
+    .specialists-header h1{
+        font-size:2.2rem;
+    }
+
+    .specialists-header p{
+        width:100%;
+        font-size:15px;
+    }
+
+    .specialists-search-bar{
+        width:100%;
+    }
+
+    .specialists{
+        padding:50px 6%;
+        gap:30px;
+    }
+
+    .specialist-card{
+        width:100%;
+        max-width:320px;
+    }
+
+}

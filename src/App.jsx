@@ -6,8 +6,9 @@ import Upload from './pages/Upload.jsx'
 import Reports from './pages/Reports.jsx'
 import ReportDetail from './pages/ReportDetail.jsx'
 import Chat from './pages/Chat.jsx'
-import Bottom from './components/dashboard//settings/Bottom.jsx'
 import SettingsPage from './pages/settings.jsx'
+import Home from './pages/home.jsx'
+import Services from './pages/services.jsx'
 import { useAuth } from './lib/auth.jsx'
 import FullScreenLoader from './components/FullScreenLoader.jsx'
 
@@ -24,21 +25,30 @@ function PublicOnlyRoute({ children }) {
   if (session) return <Navigate to="/dashboard" replace />
   return children
 }
-export default function App() {
-  
 
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<DashboardLayout />}>
+        <Route path="/" element={<Home />} />
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/reports/:id" element={<ReportDetail />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/services" element={<Services />} />
         </Route>
-        <Route path="/dashboard" element={<Navigate to="/dashboard" replace />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Activity, LayoutDashboard, Upload, FileText, MessageSquare, Menu, X } from 'lucide-react'
+import { Settings as SettingsIcon } from "lucide-react";
 
 const navItems = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/reports', label: 'Reports', icon: FileText },
   { to: '/upload', label: 'Upload', icon: Upload },
   { to: '/chat', label: 'AI Chat', icon: MessageSquare },
+  { to: "Settings", path: "/settings", icon: SettingsIcon },
 ]
 
 export default function DashboardLayout() {
