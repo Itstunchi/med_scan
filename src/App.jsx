@@ -8,8 +8,25 @@ import ReportDetail from './pages/ReportDetail.jsx'
 import Chat from './pages/Chat.jsx'
 import Bottom from './components/dashboard//settings/Bottom.jsx'
 import SettingsPage from './pages/settings.jsx'
+import { useAuth } from './lib/auth.jsx'
+import FullScreenLoader from './components/FullScreenLoader.jsx'
 
+function ProtectedRoute({ children }) {
+  const { session, loading } = useAuth()
+  if (loading) return <FullScreenLoader />
+  if (!session) return <Navigate to="/login" replace />
+  return children
+}
+
+function PublicOnlyRoute({ children }) {
+  const { session, loading } = useAuth()
+  if (loading) return <FullScreenLoader />
+  if (session) return <Navigate to="/dashboard" replace />
+  return children
+}
 export default function App() {
+  
+
   return (
     <BrowserRouter>
       <Routes>

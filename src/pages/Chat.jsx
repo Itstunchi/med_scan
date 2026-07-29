@@ -62,11 +62,28 @@ export default function Chat() {
   const scrollToBottom = useCallback(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [])
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
 
+  // const generateResponse = async (content, history) => {
+  //   // TODO: replace this with a real API call to your AI backend
+  //   await new Promise((resolve) => setTimeout(resolve, 800))
+  //   return `(placeholder response) You asked: "${content}"\n\nHere's a quick breakdown:\n- **Key point one** about your question\n- **Key point two** with more detail\n- A general recommendation to discuss with your doctor`
+  // }
   const generateResponse = async (content, history) => {
-    // TODO: replace this with a real API call to your AI backend
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    return `(placeholder response) You asked: "${content}"\n\nHere's a quick breakdown:\n- **Key point one** about your question\n- **Key point two** with more detail\n- A general recommendation to discuss with your doctor`
-  }
+  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
+      messages: [...history, { role: 'user', content }],
+    }),
+  })
+  if (!response.ok) throw new Error(`Request failed (${response.status})`)
+  const data = await response.json()
+  if (data.error) throw new Error(data.error)
+  return data.message
+}
 
   const sendMessage = async (text) => {
     const content = text || input.trim()
