@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageSquare, Send, Loader2, Bot, User as UserIcon, Sparkles, ArrowLeft, Plus, Copy, Check, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 const suggestedQuestions = ['What does high cholesterol mean?','Explain my blood test results','What foods help lower blood pressure?','What is the difference between HDL and LDL?']
 const MAX_CHARS = 1000
@@ -52,6 +54,7 @@ function renderMarkdown(text) {
 }
 
 export default function Chat() {
+  const { user } = useAuth()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,28 +65,35 @@ export default function Chat() {
   const scrollToBottom = useCallback(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [])
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
 
-  // const generateResponse = async (content, history) => {
-  //   // TODO: replace this with a real API call to your AI backend
-  //   await new Promise((resolve) => setTimeout(resolve, 800))
-  //   return `(placeholder response) You asked: "${content}"\n\nHere's a quick breakdown:\n- **Key point one** about your question\n- **Key point two** with more detail\n- A general recommendation to discuss with your doctor`
-  // }
   const generateResponse = async (content, history) => {
-  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`
-  const response = await fetch(functionUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({
-      messages: [...history, { role: 'user', content }],
-    }),
-  })
-  if (!response.ok) throw new Error(`Request failed (${response.status})`)
-  const data = await response.json()
-  if (data.error) throw new Error(data.error)
-  return data.message
-}
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: [...history, { role: 'user', content }],
+      }),
+    })
+    if (!response.ok) throw new Error(`Request failed (${response.status})`)
+    const data = await response.json()
+    if (data.error) throw new Error(data.error)
+    return data.message
+  }
+
+  const saveToHistory = async (userContent, assistantContent) => {
+    if (!user?.id) return
+    try {
+      await supabase.from('chat_messages').insert([
+        { user_id: user.id, role: 'user', content: userContent },
+        { user_id: user.id, role: 'assistant', content: assistantContent },
+      ])
+    } catch (err) {
+      console.error('Failed to save chat history:', err)
+    }
+  }
 
   const sendMessage = async (text) => {
     const content = text || input.trim()
@@ -98,6 +108,7 @@ export default function Chat() {
       const responseText = await generateResponse(content, newMessages)
       const assistantMsg = { role: 'assistant', content: responseText, time: new Date() }
       setMessages([...newMessages, assistantMsg])
+      await saveToHistory(content, responseText)
     } catch (err) {
       setMessages([...newMessages, { role: 'assistant', content: `I encountered an error: ${err.message}. Please try again.`, time: new Date() }])
     } finally {
@@ -116,6 +127,7 @@ export default function Chat() {
       updated[assistantIndex] = { role: 'assistant', content: responseText, time: new Date() }
       setMessages(updated)
       setFeedback((prev) => ({ ...prev, [assistantIndex]: null }))
+      await saveToHistory(userMsg.content, responseText)
     } catch (err) {
       console.error('Regenerate failed:', err)
     } finally {
