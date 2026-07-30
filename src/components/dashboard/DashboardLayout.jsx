@@ -1,18 +1,26 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { Activity, LayoutDashboard, Upload, FileText, MessageSquare, Menu, X } from 'lucide-react'
-import { Settings as SettingsIcon } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Activity, LayoutDashboard, Upload, FileText, MessageSquare, Menu, X, LogOut } from 'lucide-react'
+import { Settings as SettingsIcon } from 'lucide-react'
+import { useAuth } from '../../lib/auth.jsx'
 
 const navItems = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/reports', label: 'Reports', icon: FileText },
   { to: '/upload', label: 'Upload', icon: Upload },
   { to: '/chat', label: 'AI Chat', icon: MessageSquare },
-  { to: "Settings", path: "/settings", icon: SettingsIcon },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
+
+  const handleLogout = async () => {
+    navigate('/', { replace: true })
+    await signOut()
+  }
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -48,6 +56,15 @@ export default function DashboardLayout() {
             })}
           </nav>
 
+          <div className="hidden items-center gap-2 lg:flex">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-rose-600"
+            >
+              <LogOut className="h-4 w-4" /> Log Out
+            </button>
+          </div>
+
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
@@ -76,6 +93,12 @@ export default function DashboardLayout() {
                 </NavLink>
               )
             })}
+            <button
+              onClick={() => { setMobileOpen(false); handleLogout(); }}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50"
+            >
+              <LogOut className="h-4 w-4" /> Log Out
+            </button>
           </nav>
         )}
       </header>
