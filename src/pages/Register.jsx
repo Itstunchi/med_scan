@@ -9,9 +9,13 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../lib/auth.jsx";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,7 +29,8 @@ const Register = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const handleRegister = (e) => {
+
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     setError("");
@@ -53,10 +58,17 @@ const Register = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess("Account created successfully!");
-    }, 2000);
+    const { error: signUpError } = await signUp(email, password, fullName);
+
+    setLoading(false);
+
+    if (signUpError) {
+      setError(signUpError.message || "Failed to create account.");
+      return;
+    }
+
+    setSuccess("Account created successfully! Redirecting...");
+    setTimeout(() => navigate("/dashboard"), 1200);
   };
 
 return (

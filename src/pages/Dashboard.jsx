@@ -144,8 +144,7 @@ export default function Dashboard() {
   const GreetingIcon = greeting.icon
 
   return (
-    <div className="w-full space-y-5 sm:space-y-6 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 animate-fade-in">
-      {/* Header Section */}
+    <div className="w-full space-y-5 sm:space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -159,7 +158,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Tip Banner */}
       <div className="flex items-center gap-3 rounded-2xl bg-teal-gradient p-3.5 sm:p-4 text-white shadow-teal">
         <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -170,7 +168,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard icon={FileText} label="Total Reports" value={stats.total} gradient="bg-teal-gradient" />
         <StatCard icon={CheckCircle2} label="Completed" value={stats.completed} gradient="bg-emerald-gradient" />
@@ -178,7 +175,6 @@ export default function Dashboard() {
         <StatCard icon={Activity} label="Health Score" value="88" gradient="bg-slate-gradient" />
       </div>
 
-      {/* Health Overview Card */}
       <div className="card overflow-hidden rounded-2xl">
         <div className="border-b border-slate-100 px-4 sm:px-6 py-3.5 sm:py-4">
           <div className="flex items-center gap-2">
@@ -191,38 +187,36 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="grid gap-6 sm:gap-8 p-4 sm:p-6 lg:grid-cols-2 lg:items-start">
-          {/* Interactive Body Image Container */}
           <div className="relative flex items-center justify-center">
             <div className="relative aspect-[3/4] w-full max-w-[320px] sm:max-w-[380px] lg:max-w-none overflow-hidden rounded-2xl bg-slate-100 shadow-inner">
-              <img 
-                key={active.id} 
-                src={active.image} 
-                alt={active.title} 
-                className="h-full w-full object-cover animate-fade-in transition-all duration-700" 
+              <img
+                key={active.id}
+                src={active.image}
+                alt={active.title}
+                className="h-full w-full object-cover animate-fade-in transition-all duration-700"
               />
               <div className={`absolute inset-0 bg-gradient-to-t ${active.color} opacity-20`} />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
-              
-              {/* Interactive Points */}
+
               {bodyParts.map((bp, i) => {
                 const positions = [
-                  { top: '32%', left: '50%' }, // heart
-                  { top: '12%', left: '50%' }, // brain
-                  { top: '22%', left: '40%' }, // lungs
-                  { top: '48%', left: '50%' }, // stomach
-                  { top: '10%', left: '38%' }, // eyes
-                  { top: '10%', left: '62%' }, // ear
+                  { top: '32%', left: '50%' },
+                  { top: '12%', left: '50%' },
+                  { top: '22%', left: '40%' },
+                  { top: '48%', left: '50%' },
+                  { top: '10%', left: '38%' },
+                  { top: '10%', left: '62%' },
                 ]
                 const pos = positions[i]
                 const Icon = bp.icon
                 const isActive = i === activeBodyPart
                 return (
-                  <button 
-                    key={bp.id} 
-                    onClick={() => setActiveBodyPart(i)} 
-                    className="group absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none z-10" 
+                  <button
+                    key={bp.id}
+                    onClick={() => setActiveBodyPart(i)}
+                    className="group absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none z-10"
                     style={{ top: pos.top, left: pos.left }}
                     aria-label={`View ${bp.title}`}
                   >
@@ -237,7 +231,6 @@ export default function Dashboard() {
                 )
               })}
 
-              {/* Mobile Info Overlay */}
               <div className="absolute bottom-3 sm:bottom-5 left-3 sm:left-5 right-3 sm:right-5">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${active.color} shadow-lg ring-2 ring-white/20`}>
@@ -252,7 +245,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Details Section */}
           <div key={active.id} className="flex flex-col animate-slide-right">
             <div className="mb-4 sm:mb-5 flex items-center gap-3 sm:gap-4">
               <div className={`flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl ${active.bg} shadow-sm`}>
@@ -263,10 +255,9 @@ export default function Dashboard() {
                 <p className="text-xs sm:text-sm text-slate-400">Last updated: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
               </div>
             </div>
-            
+
             <p className="text-sm sm:text-base leading-relaxed text-slate-600">{active.description}</p>
-            
-            {/* Quick Stats Grid */}
+
             <div className="mt-5 sm:mt-6 grid grid-cols-3 gap-2.5 sm:gap-4">
               {active.stats.map((stat) => (
                 <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 sm:p-3.5 flex flex-col items-center sm:items-start text-center sm:text-left transition-colors hover:bg-slate-100">
@@ -277,7 +268,6 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Health Tips */}
             <div className="mt-6 sm:mt-8">
               <p className="mb-3 flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
                 <Lightbulb className="h-4 w-4 text-amber-500" /> Health Tips
@@ -291,7 +281,7 @@ export default function Dashboard() {
                 ))}
               </ul>
             </div>
-            
+
             <Link to="/chat" className="mt-6 sm:mt-8 inline-flex items-center gap-2 text-sm sm:text-base font-bold text-teal-700 hover:text-teal-800 transition-colors group">
               Ask AI about this <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
@@ -299,10 +289,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Reports & AI Questions Grid */}
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
-          {/* Recent Reports Card */}
           <div className="card-slate p-4 sm:p-6 rounded-2xl">
             <div className="mb-4 sm:mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -315,7 +303,7 @@ export default function Dashboard() {
                 View all <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Link>
             </div>
-            
+
             {dataLoading ? (
               <div className="space-y-2.5 sm:space-y-3">
                 {[1, 2, 3].map((i) => <div key={i} className="h-14 sm:h-16 animate-pulse rounded-xl bg-white/10" />)}
@@ -355,7 +343,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* AI Questions Card */}
           <div className="card p-4 sm:p-6 rounded-2xl">
             <div className="mb-4 sm:mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -368,7 +355,7 @@ export default function Dashboard() {
                 Ask more <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Link>
             </div>
-            
+
             {dataLoading ? (
               <div className="space-y-2.5 sm:space-y-3">
                 {[1, 2].map((i) => <div key={i} className="h-12 sm:h-14 animate-pulse rounded-xl bg-slate-100" />)}
@@ -399,7 +386,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Sidebar - Appointments */}
         <div className="lg:col-span-1">
           <div className="card-dark p-4 sm:p-6 rounded-2xl sticky top-6">
             <div className="mb-5 sm:mb-6 flex items-center gap-2.5">
@@ -408,7 +394,7 @@ export default function Dashboard() {
               </div>
               <h2 className="text-base sm:text-lg font-bold text-white">Appointments</h2>
             </div>
-            
+
             {dataLoading ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-white/10" />)}
@@ -443,7 +429,7 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-            
+
             <Link to="/services" className="mt-6 sm:mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-900 shadow-xl hover:bg-teal-50 transition-all hover:scale-[1.02] active:scale-[0.98]">
               <Stethoscope className="h-4 w-4" /> Book Appointment
             </Link>
@@ -451,14 +437,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Links Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickLink to="/upload" icon={Upload} title="Upload Report" desc="Add a new medical document" gradient="bg-teal-gradient" />
         <QuickLink to="/chat" icon={MessageSquare} title="AI Assistant" desc="Ask health questions" gradient="bg-slate-gradient" />
         <QuickLink to="/services" icon={Stethoscope} title="Health Services" desc="Explore specialties" gradient="bg-coral-gradient" />
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 pt-6 sm:pt-8 pb-4">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <div className="flex items-center gap-3 text-sm sm:text-base text-slate-500">
