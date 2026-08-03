@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../lib/auth.jsx";
 import { supabase } from "../../../lib/supabase.js";
 
@@ -18,10 +19,12 @@ const icons = {
   download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3",
   trash: "M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z",
   alert: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z M12 9v4 M12 17h.01",
+  arrowLeft: "M19 12H5 M12 19l-7-7 7-7",
+  shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z",
 };
 
 function Card({ children, className = "" }) {
-  return <div className={`bg-white border border-gray-200 rounded-xl p-6 ${className}`}>{children}</div>;
+  return <div className={`bg-white border border-gray-200 rounded-xl p-4 sm:p-6 ${className}`}>{children}</div>;
 }
 
 function CardHeader({ icon, title }) {
@@ -31,6 +34,11 @@ function CardHeader({ icon, title }) {
       <h2 className="text-base font-semibold text-gray-900">{title}</h2>
     </div>
   );
+}
+
+function formatMemberSince(dateStr) {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 export default function Settings() {
@@ -53,6 +61,8 @@ export default function Settings() {
     if (profile?.full_name) setFullName(profile.full_name);
     if (user?.email) setEmail(user.email);
   }, [profile, user]);
+
+  const nameUnchanged = fullName === (profile?.full_name || "");
 
   const handleChangePhotoClick = () => {
     fileInputRef.current.click();
@@ -87,7 +97,11 @@ export default function Settings() {
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     setPasswordMessage("");
-    if (!newPassword || newPassword !== confirmPassword) {
+    if (newPassword.length < 8) {
+      setPasswordMessage("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
       setPasswordMessage("New password and confirmation don't match.");
       return;
     }
@@ -118,30 +132,47 @@ export default function Settings() {
     ? fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : (email ? email[0].toUpperCase() : "?");
 
+  const memberSince = formatMemberSince(user?.created_at);
+  const role = profile?.role || "patient";
+
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Account settings</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your profile, security, and account preferences.</p>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-teal-700 mb-4">
+        <Icon path={icons.arrowLeft} className="w-4 h-4" /> Back to Dashboard
+      </Link>
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Account settings</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your profile, security, and account preferences.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold capitalize text-teal-700">
+            <Icon path={icons.shield} className="w-3.5 h-3.5" /> {role}
+          </span>
+          {memberSince && (
+            <span className="text-xs text-gray-400">Member since {memberSince}</span>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-5">
-        <Card className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+      <div className="space-y-4 sm:space-y-5">
+        <Card className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
             {photoPreview ? (
-              <img src={photoPreview} alt="Profile" className="w-14 h-14 rounded-full object-cover" />
+              <img src={photoPreview} alt="Profile" className="w-14 h-14 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-semibold text-base">
+              <div className="w-14 h-14 shrink-0 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-semibold text-base">
                 {initials}
               </div>
             )}
-            <div>
-              <p className="font-semibold text-gray-900">{fullName || "Your name"}</p>
-              <p className="text-sm text-gray-500">{email}</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900 truncate">{fullName || "Your name"}</p>
+              <p className="text-sm text-gray-500 truncate">{email}</p>
             </div>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" style={{ display: "none" }} />
-          <button onClick={handleChangePhotoClick} className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+          <button onClick={handleChangePhotoClick} className="flex w-full sm:w-auto items-center justify-center gap-2 text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition shrink-0">
             <Icon path={icons.camera} className="w-4 h-4" />
             Change photo
           </button>
@@ -166,7 +197,7 @@ export default function Settings() {
                 <p className="mt-1 text-xs text-gray-400">Email changes require verification — contact support to update.</p>
               </div>
             </div>
-            <button type="submit" disabled={savingAccount} className="bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition disabled:opacity-60">
+            <button type="submit" disabled={savingAccount || nameUnchanged} className="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
               {savingAccount ? "Saving..." : "Save changes"}
             </button>
           </form>
@@ -175,7 +206,7 @@ export default function Settings() {
         <Card>
           <CardHeader icon="lock" title="Edit password" />
           {passwordMessage && (
-            <div className={`mb-4 rounded-lg px-4 py-2.5 text-sm ${passwordMessage.startsWith("Failed") || passwordMessage.includes("match") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+            <div className={`mb-4 rounded-lg px-4 py-2.5 text-sm ${passwordMessage.startsWith("Failed") || passwordMessage.includes("match") || passwordMessage.includes("least") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
               {passwordMessage}
             </div>
           )}
@@ -187,14 +218,14 @@ export default function Settings() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">New password</label>
-                <input type="password" placeholder="Enter new password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600" />
+                <input type="password" placeholder="At least 8 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Confirm password</label>
                 <input type="password" placeholder="Repeat new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600" />
               </div>
             </div>
-            <button type="submit" disabled={savingPassword} className="bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition disabled:opacity-60">
+            <button type="submit" disabled={savingPassword} className="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition disabled:opacity-60">
               {savingPassword ? "Updating..." : "Update password"}
             </button>
           </form>
@@ -203,26 +234,26 @@ export default function Settings() {
         <Card>
           <CardHeader icon="settings" title="Manage account" />
           <div className="divide-y divide-gray-100">
-            <div className="flex items-center justify-between py-3">
+            <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-900">Two-factor authentication</p>
                 <p className="text-xs text-gray-500 mt-0.5">Add an extra layer of security</p>
               </div>
-              <button className="text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Enable</button>
+              <button className="w-full sm:w-auto text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Enable</button>
             </div>
-            <div className="flex items-center justify-between py-3">
+            <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-900">Email notifications</p>
                 <p className="text-xs text-gray-500 mt-0.5">Report updates and health tips</p>
               </div>
-              <button className="text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Manage</button>
+              <button className="w-full sm:w-auto text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Manage</button>
             </div>
-            <div className="flex items-center justify-between py-3">
+            <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-900">Download your data</p>
                 <p className="text-xs text-gray-500 mt-0.5">Export reports and account info</p>
               </div>
-              <button className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+              <button className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
                 <Icon path={icons.download} className="w-4 h-4" />
                 Export
               </button>
@@ -230,17 +261,17 @@ export default function Settings() {
           </div>
         </Card>
 
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-red-700"><Icon path={icons.alert} className="w-[18px] h-[18px]" /></span>
             <h2 className="text-base font-semibold text-red-800">Danger zone</h2>
           </div>
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap">
             <div>
               <p className="text-sm font-semibold text-red-800">Delete account</p>
               <p className="text-xs text-red-700/80 mt-0.5">Permanently remove your account and all health data. This can't be undone.</p>
             </div>
-            <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition">
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition">
               <Icon path={icons.trash} className="w-4 h-4" />
               Delete account
             </button>
@@ -253,7 +284,7 @@ export default function Settings() {
           <div className="bg-white rounded-xl p-6 max-w-sm w-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete your account?</h3>
             <p className="text-sm text-gray-500 mb-6">This will permanently delete your account and all associated health data. This action cannot be undone.</p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button onClick={() => setShowDeleteConfirm(false)} className="text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleDeleteAccount} className="text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition">Yes, delete account</button>
             </div>
