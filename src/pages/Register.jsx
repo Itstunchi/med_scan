@@ -9,9 +9,13 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../lib/auth.jsx";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,7 +29,8 @@ const Register = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const handleRegister = (e) => {
+
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     setError("");
@@ -53,142 +58,160 @@ const Register = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess("Account created successfully!");
-    }, 2000);
+    const { data, error: signUpError } = await signUp(
+      email,
+      password,
+      fullName,
+      phone
+    );
+
+    setLoading(false);
+
+    if (signUpError) {
+      setError(signUpError.message || "Failed to create account.");
+      return;
+    }
+
+    // This is the key part
+    if (data?.session) {
+      // Session created → user is logged in → go to dashboard
+      setSuccess("Account created successfully! Redirecting...");
+      setTimeout(() => navigate("/dashboard"), 1000);
+    } else {
+      // Email confirmation is still required
+      setSuccess(
+        "Account created! Please check your email to confirm your account, then sign in."
+      );
+      setTimeout(() => navigate("/login"), 2500);
+    }
   };
 
-return (
-  <div className="login-page">
-    <div className="login-left">
-      <div className="logo">
-        <FaHeartbeat className="logo-icon" />
-        <div>
-          <h2>MediScan AI</h2>
-          <span>AI Healthcare Platform</span>
+  return (
+    <div className="login-page">
+      <div className="login-left">
+        <div className="logo">
+          <FaHeartbeat className="logo-icon" />
+          <div>
+            <h2>MediScan AI</h2>
+            <span>AI Healthcare Platform</span>
+          </div>
+        </div>
+
+        <div className="login-content">
+          <h1>Create Account</h1>
+          <p>Join MediScan AI and experience smarter healthcare.</p>
+
+          {error && <p className="error">{error}</p>}
+          {success && <p className="success">{success}</p>}
+
+          <form onSubmit={handleRegister}>
+            <div className="input-box">
+              <FaUser className="input-icon" />
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+
+            <div className="input-box">
+              <FaEnvelope className="input-icon" />
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="input-box">
+              <FaUser className="input-icon" />
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+
+            <div className="input-box">
+              <FaLock className="input-icon" />
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {showPassword ? (
+                <FaEyeSlash
+                  className="eye-icon"
+                  onClick={() => setShowPassword(false)}
+                />
+              ) : (
+                <FaEye
+                  className="eye-icon"
+                  onClick={() => setShowPassword(true)}
+                />
+              )}
+            </div>
+
+            <div className="input-box">
+              <FaLock className="input-icon" />
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {showConfirmPassword ? (
+                <FaEyeSlash
+                  className="eye-icon"
+                  onClick={() => setShowConfirmPassword(false)}
+                />
+              ) : (
+                <FaEye
+                  className="eye-icon"
+                  onClick={() => setShowConfirmPassword(true)}
+                />
+              )}
+            </div>
+
+            <div className="terms">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                />
+                I agree to the Terms & Conditions
+              </label>
+            </div>
+
+            <button className="login-btn" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account"}
+            </button>
+          </form>
+
+          <p className="register-link">
+            Already have an account? <Link to="/login">Sign In</Link>
+          </p>
         </div>
       </div>
 
-      <div className="login-content">
-        <h1>Create Account</h1>
-        <p>Join MediScan AI and experience smarter healthcare.</p>
-
-    {error && <p className="error">{error}</p>}
-{success && <p className="success">{success}</p>}
-
-        <form onSubmit={handleRegister}>
-          <div className="input-box">
-            <FaUser className="input-icon" />
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-
-          <div className="input-box">
-            <FaEnvelope className="input-icon" />
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="input-box">
-            <FaUser className="input-icon" />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
-
-          <div className="input-box">
-            <FaLock className="input-icon" />
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-
-            {showPassword ? (
-              <FaEyeSlash
-                className="eye-icon"
-                onClick={() => setShowPassword(false)}
-              />
-            ) : (
-              <FaEye
-                className="eye-icon"
-                onClick={() => setShowPassword(true)}
-              />
-            )}
-          </div>
-
-          <div className="input-box">
-            <FaLock className="input-icon" />
-
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-
-            {showConfirmPassword ? (
-              <FaEyeSlash
-                className="eye-icon"
-                onClick={() => setShowConfirmPassword(false)}
-              />
-            ) : (
-              <FaEye
-                className="eye-icon"
-                onClick={() => setShowConfirmPassword(true)}
-              />
-            )}
-          </div>
-
-          <div className="terms">
-            <label>
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-              />
-              I agree to the Terms & Conditions
-            </label>
-          </div>
-
-          <button className="login-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-
-        <p className="register-link">
-          Already have an account? <Link to="/login">Sign In</Link>
-        </p>
+      <div className="login-right">
+        <img src={doctorImage} alt="doctor" />
+        <div className="register-overlay">
+          <h2>Welcome to MediScan AI</h2>
+          <ul>
+            <li>✔ AI Disease Detection</li>
+            <li>✔ Secure Health Records</li>
+            <li>✔ Fast Medical Assistance</li>
+          </ul>
+        </div>
       </div>
     </div>
-
-    <div className="login-right">
-      <img src={doctorImage} alt="doctor" />
-
-      <div className="register-overlay">
-        <h2>Welcome to MediScan AI</h2>
-
-        <ul>
-          <li>✔ AI Disease Detection</li>
-          <li>✔ Secure Health Records</li>
-          <li>✔ Fast Medical Assistance</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-);
+  );
 };
+
 export default Register;

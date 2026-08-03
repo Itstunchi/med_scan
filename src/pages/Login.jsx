@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import "./login.css";
 import doctorImage from "../assets/doctor.png";
 import {
@@ -9,25 +10,46 @@ import {
   FaGoogle,
   FaHeartbeat,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { useAuth } from "../lib/auth.jsx";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGoogleSignIn = () => {
     alert("Google Sign-In will be connected to Firebase.");
   };
 
-  const handleRegister = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
+    console.log('STEP 1: form submitted', email, password);
+    setError("");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const { error } = await signIn(email, password);
+      console.log('STEP 2: signIn returned', error);
+
       setLoading(false);
-      alert("✅ Account created successfully!");
-    }, 2000);
+
+      if (error) {
+        console.log('STEP 3: login failed:', error.message);
+        setError(error.message || "Invalid email or password.");
+        return;
+      }
+
+      console.log('STEP 4: success, navigating to dashboard');
+      navigate("/dashboard");
+    } catch (err) {
+      console.log('EXCEPTION CAUGHT:', err);
+      setLoading(false);
+      setError("Something went wrong: " + err.message);
+    }
   };
 
   return (
@@ -45,10 +67,22 @@ const Login = () => {
           <h1>Medi-Scan</h1>
           <p>Sign in to access AI-powered healthcare services.</p>
 
-          <form onSubmit={handleRegister}>
+          {error && (
+            <div style={{ background: "#fee2e2", color: "#b91c1c", padding: "10px 14px", borderRadius: "8px", marginBottom: "12px", fontSize: "14px" }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin}>
             <div className="jp-input-box">
               <FaEnvelope className="jp-input-icon" />
-              <input type="email" placeholder="Enter your email" />
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
 
             <div className="jp-input-box">
@@ -56,6 +90,9 @@ const Login = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
 
               {showPassword ? (
@@ -80,7 +117,7 @@ const Login = () => {
               <a href="#">Forgot Password?</a>
             </div>
 
-            <button className="jp-login-btn">
+            <button className="jp-login-btn" type="submit" disabled={loading}>
               {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>

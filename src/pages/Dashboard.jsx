@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, FileText, Upload, MessageSquare, Stethoscope, Calendar, HeartPulse, Brain, Wind, Eye, Ear, Utensils, ChevronRight, Plus, Clock, CheckCircle2, ArrowRight, Lightbulb, Sun, Moon, Sunrise, ShieldCheck, Sparkles } from 'lucide-react'
+import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 const bodyParts = [
   {
@@ -71,17 +73,6 @@ const bodyParts = [
   },
 ]
 
-const mockRecentReports = [
-  { id: '1', file_name: 'Blood Test Results.pdf', upload_date: '2026-07-15', status: 'completed', service_category: 'Laboratory' },
-  { id: '2', file_name: 'Chest X-Ray.pdf', upload_date: '2026-07-10', status: 'completed', service_category: 'Radiology' },
-  { id: '3', file_name: 'Annual Checkup Notes.pdf', upload_date: '2026-07-05', status: 'pending', service_category: 'General Health' },
-]
-
-const mockAppointments = [
-  { id: '1', title: 'Dr. Smith — Cardiology Follow-up', date: '2026-07-28', time: '10:00 AM' },
-  { id: '2', title: 'Annual Eye Exam', date: '2026-08-03', time: '2:30 PM' },
-]
-
 const dailyTips = [
   'Staying hydrated helps regulate body temperature and supports every organ system.',
   'A 10-minute walk after meals can help stabilize blood sugar levels.',
@@ -96,10 +87,21 @@ function getGreeting() {
   return { text: 'Good evening', icon: Moon }
 }
 
+function relativeTime(dateStr) {
+  const days = Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24))
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 30) return `${days} days ago`
+  return `${Math.floor(days / 30)} months ago`
+}
+
 export default function Dashboard() {
+  const { user, profile } = useAuth()
   const [activeBodyPart, setActiveBodyPart] = useState(0)
-  const [recentReports] = useState(mockRecentReports)
-  const [appointments] = useState(mockAppointments)
+  const [recentReports, setRecentReports] = useState([])
+  const [appointments, setAppointments] = useState([])
+  const [recentQuestions, setRecentQuestions] = useState([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [greeting, setGreeting] = useState(getGreeting())
   const [tipIndex, setTipIndex] = useState(0)
 
@@ -113,6 +115,23 @@ export default function Dashboard() {
     return () => clearInterval(tipInterval)
   }, [])
 
+  useEffect(() => {
+    async function loadData() {
+      const [reportsRes, apptsRes, questionsRes] = await Promise.all([
+        supabase.from('medical_reports').select('*').order('upload_date', { ascending: false }).limit(6),
+        supabase.from('appointments').select('*').gte('date', new Date().toISOString()).order('date', { ascending: true }).limit(3),
+        user?.id
+          ? supabase.from('chat_messages').select('content, created_at').eq('user_id', user.id).eq('role', 'user').order('created_at', { ascending: false }).limit(4)
+          : Promise.resolve({ data: [] }),
+      ])
+      setRecentReports(reportsRes.data || [])
+      setAppointments(apptsRes.data || [])
+      setRecentQuestions(questionsRes.data || [])
+      setDataLoading(false)
+    }
+    loadData()
+  }, [user?.id])
+
   const stats = {
     total: recentReports.length,
     completed: recentReports.filter(r => r.status === 'completed').length,
@@ -121,52 +140,66 @@ export default function Dashboard() {
 
   const active = bodyParts[activeBodyPart]
   const ActiveIcon = active.icon
-  const displayName = 'there'
+  const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
   const GreetingIcon = greeting.icon
 
   return (
-    <div className="space-y-5 sm:space-y-6 px-4 sm:px-0 animate-fade-in">
+    <div className="w-full space-y-5 sm:space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <GreetingIcon className="h-5 w-5 text-amber-500" />
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{greeting.text}, {displayName}</h1>
+            <GreetingIcon className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">{greeting.text}, {displayName}</h1>
           </div>
-          <p className="mt-1 text-sm text-slate-500">Here's your health overview for today.</p>
+          <p className="mt-1 text-sm sm:text-base text-slate-500">Here's your health overview for today.</p>
         </div>
-        <Link to="/upload" className="btn-primary w-full sm:w-auto justify-center"><Plus className="h-4 w-4" /> Upload Report</Link>
+        <Link to="/upload" className="btn-primary w-full sm:w-auto justify-center text-sm sm:text-base py-2.5 sm:py-2">
+          <Plus className="h-4 w-4" /> Upload Report
+        </Link>
       </div>
 
       <div className="flex items-center gap-3 rounded-2xl bg-teal-gradient p-3.5 sm:p-4 text-white shadow-teal">
-        <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-white/20">
+        <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-teal-100">Tip of the moment</p>
-          <p key={tipIndex} className="mt-0.5 text-sm text-white animate-fade-in">{dailyTips[tipIndex]}</p>
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-teal-100">Tip of the moment</p>
+          <p key={tipIndex} className="mt-0.5 text-xs sm:text-sm md:text-base text-white animate-fade-in line-clamp-2 sm:line-clamp-none">{dailyTips[tipIndex]}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard icon={FileText} label="Total Reports" value={stats.total} gradient="bg-teal-gradient" />
         <StatCard icon={CheckCircle2} label="Completed" value={stats.completed} gradient="bg-emerald-gradient" />
         <StatCard icon={Clock} label="Pending" value={stats.pending} gradient="bg-amber-gradient" />
         <StatCard icon={Activity} label="Health Score" value="88" gradient="bg-slate-gradient" />
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4">
+      <div className="card overflow-hidden rounded-2xl">
+        <div className="border-b border-slate-100 px-4 sm:px-6 py-3.5 sm:py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-teal-50"><HeartPulse className="h-4 w-4 text-teal-700" /></div>
-            <div><h2 className="font-semibold text-slate-800">Health Overview</h2><p className="text-xs text-slate-400">Click a body part to see detailed health information</p></div>
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50">
+              <HeartPulse className="h-4 w-4 sm:h-5 sm:w-5 text-teal-700" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate">Health Overview</h2>
+              <p className="text-[10px] sm:text-xs text-slate-400 truncate">Click a body part to see detailed health information</p>
+            </div>
           </div>
         </div>
-        <div className="grid gap-4 sm:gap-5 p-4 sm:p-5 lg:grid-cols-2">
+
+        <div className="grid gap-6 sm:gap-8 p-4 sm:p-6 lg:grid-cols-2 lg:items-start">
           <div className="relative flex items-center justify-center">
-            <div className="relative h-[280px] sm:h-[360px] lg:h-[420px] w-full max-w-sm overflow-hidden rounded-2xl bg-slate-100">
-              <img key={active.id} src={active.image} alt={active.title} className="h-full w-full object-cover animate-fade-in transition-all duration-500" />
+            <div className="relative aspect-[3/4] w-full max-w-[320px] sm:max-w-[380px] lg:max-w-none overflow-hidden rounded-2xl bg-slate-100 shadow-inner">
+              <img
+                key={active.id}
+                src={active.image}
+                alt={active.title}
+                className="h-full w-full object-cover animate-fade-in transition-all duration-700"
+              />
               <div className={`absolute inset-0 bg-gradient-to-t ${active.color} opacity-20`} />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
+
               {bodyParts.map((bp, i) => {
                 const positions = [
                   { top: '32%', left: '50%' },
@@ -180,110 +213,247 @@ export default function Dashboard() {
                 const Icon = bp.icon
                 const isActive = i === activeBodyPart
                 return (
-                  <button key={bp.id} onClick={() => setActiveBodyPart(i)} className="group absolute -translate-x-1/2 -translate-y-1/2" style={{ top: pos.top, left: pos.left }}>
-                    <span className={`relative flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full transition-all duration-300 ${isActive ? `bg-gradient-to-br ${bp.color} scale-110 shadow-lg ring-2 ${bp.ring}` : 'bg-white/90 shadow-md hover:scale-110'}`}>
-                      <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isActive ? 'text-white' : bp.text}`} />
+                  <button
+                    key={bp.id}
+                    onClick={() => setActiveBodyPart(i)}
+                    className="group absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none z-10"
+                    style={{ top: pos.top, left: pos.left }}
+                    aria-label={`View ${bp.title}`}
+                  >
+                    <span className={`relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full transition-all duration-300 ${isActive ? `bg-gradient-to-br ${bp.color} scale-110 shadow-lg ring-2 ${bp.ring}` : 'bg-white/90 shadow-md hover:scale-110'}`}>
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isActive ? 'text-white' : bp.text}`} />
                       {isActive && <span className="absolute inset-0 animate-ping rounded-full bg-white opacity-40" />}
                     </span>
-                    <span className={`absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-medium transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} bg-slate-900 text-white`}>{bp.title.split(' ')[0]}</span>
+                    <span className={`absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold transition-opacity shadow-sm ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} bg-slate-900 text-white`}>
+                      {bp.title.split(' ')[0]}
+                    </span>
                   </button>
                 )
               })}
-              <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
-                <div className="flex items-center gap-2">
-                  <div className={`flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${active.color} shadow-lg`}><ActiveIcon className="h-4 w-4 sm:h-5 sm:w-5 text-white" /></div>
-                  <div><p className="text-sm font-bold text-white drop-shadow">{active.title}</p><p className="text-xs text-white/80">Tap icons to explore</p></div>
+
+              <div className="absolute bottom-3 sm:bottom-5 left-3 sm:left-5 right-3 sm:right-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${active.color} shadow-lg ring-2 ring-white/20`}>
+                    <ActiveIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm sm:text-base font-bold text-white drop-shadow-md truncate">{active.title}</p>
+                    <p className="text-[10px] sm:text-xs text-white/90 font-medium">Tap icons to explore</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div key={active.id} className="flex flex-col animate-slide-right">
-            <div className="mb-4 flex items-center gap-3">
-              <div className={`flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${active.bg}`}><ActiveIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${active.text}`} /></div>
-              <div><h3 className="text-base sm:text-lg font-bold text-slate-800">{active.title}</h3><p className="text-xs text-slate-400">Last updated: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>
+            <div className="mb-4 sm:mb-5 flex items-center gap-3 sm:gap-4">
+              <div className={`flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl ${active.bg} shadow-sm`}>
+                <ActiveIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${active.text}`} />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-800">{active.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400">Last updated: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+              </div>
             </div>
-            <p className="text-sm leading-relaxed text-slate-600">{active.description}</p>
-            <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-2.5">
+
+            <p className="text-sm sm:text-base leading-relaxed text-slate-600">{active.description}</p>
+
+            <div className="mt-5 sm:mt-6 grid grid-cols-3 gap-2.5 sm:gap-4">
               {active.stats.map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50 p-2 sm:p-3">
-                  <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">{stat.label}</p>
-                  <p className="mt-1 text-xs sm:text-sm font-bold text-slate-800">{stat.value}</p>
-                  <span className={`mt-1.5 inline-block h-1.5 w-1.5 rounded-full ${stat.status === 'good' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 sm:p-3.5 flex flex-col items-center sm:items-start text-center sm:text-left transition-colors hover:bg-slate-100">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-tight">{stat.label}</p>
+                  <p className="mt-1 text-xs sm:text-base font-bold text-slate-800 truncate w-full">{stat.value}</p>
+                  <span className={`mt-2 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${stat.status === 'good' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'}`} />
                 </div>
               ))}
             </div>
-            <div className="mt-4">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><Lightbulb className="h-3.5 w-3.5" /> Health Tips</p>
-              <ul className="space-y-2">{active.tips.map((tip, i) => <li key={i} className="flex items-start gap-2 text-sm text-slate-600"><CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${active.text}`} /><span>{tip}</span></li>)}</ul>
+
+            <div className="mt-6 sm:mt-8">
+              <p className="mb-3 flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
+                <Lightbulb className="h-4 w-4 text-amber-500" /> Health Tips
+              </p>
+              <ul className="space-y-2.5 sm:space-y-3">
+                {active.tips.map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-600 group">
+                    <CheckCircle2 className={`mt-0.5 h-4 w-4 sm:h-5 sm:w-5 shrink-0 transition-transform group-hover:scale-110 ${active.text}`} />
+                    <span className="leading-snug">{tip}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <Link to="/chat" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-800">Ask AI about this <ArrowRight className="h-3.5 w-3.5" /></Link>
+
+            <Link to="/chat" className="mt-6 sm:mt-8 inline-flex items-center gap-2 text-sm sm:text-base font-bold text-teal-700 hover:text-teal-800 transition-colors group">
+              Ask AI about this <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="card-slate p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15"><FileText className="h-4 w-4 text-white" /></div><h2 className="font-semibold text-white">Recent Reports</h2></div>
-              <Link to="/reports" className="inline-flex items-center gap-1 text-xs font-medium text-teal-200 hover:text-white">View all <ChevronRight className="h-3.5 w-3.5" /></Link>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="card-slate p-4 sm:p-6 rounded-2xl">
+            <div className="mb-4 sm:mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-white">Recent Reports</h2>
+              </div>
+              <Link to="/reports" className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-teal-200 hover:text-white transition-colors">
+                View all <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Link>
             </div>
-            {recentReports.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10"><FileText className="h-6 w-6 text-white/60" /></div>
-                <p className="text-sm text-teal-100">No reports yet. Upload your first medical report.</p>
-                <Link to="/upload" className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-semibold text-teal-800"><Upload className="h-3.5 w-3.5" /> Upload</Link>
+
+            {dataLoading ? (
+              <div className="space-y-2.5 sm:space-y-3">
+                {[1, 2, 3].map((i) => <div key={i} className="h-14 sm:h-16 animate-pulse rounded-xl bg-white/10" />)}
+              </div>
+            ) : recentReports.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-10 sm:py-12 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
+                  <FileText className="h-7 w-7 text-white/60" />
+                </div>
+                <p className="text-sm sm:text-base text-teal-100">No reports yet. Upload your first medical report.</p>
+                <Link to="/upload" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-teal-800 shadow-lg hover:bg-teal-50 transition-colors">
+                  <Upload className="h-4 w-4" /> Upload Now
+                </Link>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid gap-2.5 sm:gap-3">
                 {recentReports.slice(0, 4).map((report) => (
-                  <Link key={report.id} to={`/reports/${report.id}`} className="group flex items-center gap-3 rounded-xl bg-white/10 p-3 transition-colors hover:bg-white/15">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15"><FileText className="h-4 w-4 text-white" /></div>
-                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-white">{report.file_name}</p><p className="text-xs text-teal-200">{new Date(report.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{report.service_category && ` · ${report.service_category}`}</p></div>
-                    <StatusDot status={report.status} />
-                    <ChevronRight className="h-4 w-4 shrink-0 text-white/40 transition-transform group-hover:translate-x-0.5" />
+                  <Link key={report.id} to={`/reports/${report.id}`} className="group flex items-center gap-3 sm:gap-4 rounded-xl bg-white/10 p-3.5 sm:p-4 transition-all hover:bg-white/15 hover:translate-x-1">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm sm:text-base font-bold text-white">{report.file_name}</p>
+                      <p className="text-xs sm:text-sm text-teal-200 mt-0.5">
+                        {new Date(report.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {report.service_category && <span className="mx-1.5 opacity-50">·</span>}
+                        {report.service_category}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusDot status={report.status} />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-white/40 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card p-4 sm:p-6 rounded-2xl">
+            <div className="mb-4 sm:mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50">
+                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-teal-700" />
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-800">Recent AI Questions</h2>
+              </div>
+              <Link to="/chat" className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-teal-700 hover:text-teal-800 transition-colors">
+                Ask more <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Link>
+            </div>
+
+            {dataLoading ? (
+              <div className="space-y-2.5 sm:space-y-3">
+                {[1, 2].map((i) => <div key={i} className="h-12 sm:h-14 animate-pulse rounded-xl bg-slate-100" />)}
+              </div>
+            ) : recentQuestions.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 sm:py-10 text-center">
+                <p className="text-sm sm:text-base text-slate-500">No questions asked yet.</p>
+                <Link to="/chat" className="btn-primary mt-2">
+                  <MessageSquare className="h-4 w-4" /> Ask the AI
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-2.5 sm:gap-3">
+                {recentQuestions.map((q, i) => (
+                  <Link key={i} to="/chat" className="flex items-center gap-3 sm:gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3.5 sm:p-4 hover:bg-slate-100 transition-colors group">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 transition-transform group-hover:scale-110">
+                      <MessageSquare className="h-4 w-4 text-teal-700" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm sm:text-base font-medium text-slate-700">{q.content}</p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-0.5">{relativeTime(q.created_at)}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-slate-300 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1" />
                   </Link>
                 ))}
               </div>
             )}
           </div>
         </div>
-        <div>
-          <div className="card-dark p-4 sm:p-5">
-            <div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15"><Calendar className="h-4 w-4 text-white" /></div><h2 className="font-semibold text-white">Appointments</h2></div>
-            {appointments.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-6 text-center"><p className="text-sm text-teal-100">No upcoming appointments</p><p className="text-xs text-teal-200">Schedule your next check-up</p></div>
-            ) : (
-              <div className="space-y-3">{appointments.map((apt) => (
-                <div key={apt.id} className="rounded-xl bg-white/10 p-3">
-                  <div className="flex items-center justify-between gap-2"><p className="min-w-0 truncate text-sm font-medium text-white">{apt.title || apt.doctor_name || 'Appointment'}</p><span className="shrink-0 text-xs text-teal-200">{new Date(apt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span></div>
-                  {apt.time && <p className="mt-1 text-xs text-teal-200">{apt.time}</p>}
+
+        <div className="lg:col-span-1">
+          <div className="card-dark p-4 sm:p-6 rounded-2xl sticky top-6">
+            <div className="mb-5 sm:mb-6 flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white">Appointments</h2>
+            </div>
+
+            {dataLoading ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-white/10" />)}
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 mb-2">
+                  <Calendar className="h-6 w-6 text-white/30" />
                 </div>
-              ))}</div>
+                <p className="text-sm sm:text-base font-medium text-teal-100">No upcoming appointments</p>
+                <p className="text-xs sm:text-sm text-teal-300">Schedule your next check-up</p>
+              </div>
+            ) : (
+              <div className="space-y-3.5 sm:space-y-4">
+                {appointments.map((apt) => (
+                  <div key={apt.id} className="rounded-xl bg-white/10 p-4 border border-white/5 hover:bg-white/15 transition-colors group">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 text-sm sm:text-base font-bold text-white leading-tight">
+                        {apt.title || apt.doctor_name || 'Appointment'}
+                      </p>
+                      <span className="shrink-0 text-[10px] sm:text-xs font-bold text-teal-300 bg-teal-400/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        {new Date(apt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    {apt.time && (
+                      <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm text-teal-200/80">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>{apt.time}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
-            <Link to="/services" className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/25"><Stethoscope className="h-3.5 w-3.5" /> Book Appointment</Link>
+
+            <Link to="/services" className="mt-6 sm:mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-900 shadow-xl hover:bg-teal-50 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Stethoscope className="h-4 w-4" /> Book Appointment
+            </Link>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickLink to="/upload" icon={Upload} title="Upload Report" desc="Add a new medical document" gradient="bg-teal-gradient" />
         <QuickLink to="/chat" icon={MessageSquare} title="AI Assistant" desc="Ask health questions" gradient="bg-slate-gradient" />
         <QuickLink to="/services" icon={Stethoscope} title="Health Services" desc="Explore specialties" gradient="bg-coral-gradient" />
       </div>
 
-      <footer className="border-t border-slate-200 pt-5 sm:pt-6 pb-2">
-        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-gradient">
-              <Activity className="h-3.5 w-3.5 text-white" />
+      <footer className="border-t border-slate-200 pt-6 sm:pt-8 pb-4">
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <div className="flex items-center gap-3 text-sm sm:text-base text-slate-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-gradient shadow-sm">
+              <Activity className="h-4 w-4 text-white" />
             </div>
-            <span>© {new Date().getFullYear()} MediScan. All rights reserved.</span>
+            <span className="font-medium">© {new Date().getFullYear()} MediScan. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
-            <span>Your health data is encrypted and private.</span>
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+            <ShieldCheck className="h-4 w-4 text-teal-600" />
+            <span className="font-medium">Your health data is encrypted and private.</span>
           </div>
         </div>
       </footer>
@@ -293,28 +463,36 @@ export default function Dashboard() {
 
 function StatCard({ icon: Icon, label, value, gradient }) {
   return (
-    <div className={`${gradient} rounded-2xl p-3 sm:p-4 text-white shadow-card transition-transform hover:scale-[1.02]`}>
+    <div className={`${gradient} rounded-2xl p-4 sm:p-5 text-white shadow-card transition-all hover:scale-[1.03] hover:shadow-lg group`}>
       <div className="flex items-center justify-between">
-        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-white/20"><Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" /></div>
+        <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-white/20 transition-transform group-hover:rotate-6">
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        </div>
       </div>
-      <p className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold">{value}</p>
-      <p className="text-xs text-white/80">{label}</p>
+      <p className="mt-3 sm:mt-4 text-2xl sm:text-3xl font-black tracking-tight">{value}</p>
+      <p className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">{label}</p>
     </div>
   )
 }
 
 function StatusDot({ status }) {
-  const colors = { completed: 'bg-emerald-400', pending: 'bg-amber-400', failed: 'bg-rose-400' }
-  return <span className={`h-2 w-2 shrink-0 rounded-full ${colors[status] || colors.pending}`} />
+  const colors = { completed: 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]', pending: 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]', failed: 'bg-rose-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]' }
+  return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colors[status] || colors.pending}`} />
 }
 
 function QuickLink({ to, icon: Icon, title, desc, gradient }) {
   return (
-    <Link to={to} className={`group ${gradient} flex items-center gap-3 sm:gap-4 rounded-2xl p-4 sm:p-5 text-white shadow-card transition-all hover:shadow-card-hover hover:-translate-y-0.5`}>
-      <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-white/20"><Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" /></div>
-      <div className="min-w-0 flex-1"><p className="truncate font-semibold text-white">{title}</p><p className="truncate text-xs text-white/80">{desc}</p></div>
-      <ChevronRight className="h-5 w-5 shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
+    <Link to={to} className={`group ${gradient} flex items-center gap-4 sm:gap-5 rounded-2xl p-5 sm:p-6 text-white shadow-card transition-all hover:shadow-card-hover hover:-translate-y-1 active:scale-[0.98]`}>
+      <div className="flex h-11 w-11 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-2xl bg-white/20 shadow-inner group-hover:scale-110 transition-transform">
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base sm:text-lg font-bold text-white">{title}</p>
+        <p className="truncate text-xs sm:text-sm text-white/80 font-medium">{desc}</p>
+      </div>
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
+        <ChevronRight className="h-5 w-5 shrink-0 text-white transition-transform group-hover:translate-x-1" />
+      </div>
     </Link>
   )
 }
-
