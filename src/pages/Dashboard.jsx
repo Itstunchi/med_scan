@@ -117,12 +117,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
+      if (!user?.id) {
+        setDataLoading(false)
+        return
+      }
       const [reportsRes, apptsRes, questionsRes] = await Promise.all([
-        supabase.from('medical_reports').select('*').order('upload_date', { ascending: false }).limit(6),
-        supabase.from('appointments').select('*').gte('date', new Date().toISOString()).order('date', { ascending: true }).limit(3),
-        user?.id
-          ? supabase.from('chat_messages').select('content, created_at').eq('user_id', user.id).eq('role', 'user').order('created_at', { ascending: false }).limit(4)
-          : Promise.resolve({ data: [] }),
+        supabase.from('medical_reports').select('*').eq('user_id', user.id).order('upload_date', { ascending: false }).limit(6),
+        supabase.from('appointments').select('*').eq('user_id', user.id).gte('date', new Date().toISOString()).order('date', { ascending: true }).limit(3),
+        supabase.from('chat_messages').select('content, created_at').eq('user_id', user.id).eq('role', 'user').order('created_at', { ascending: false }).limit(4),
       ])
       setRecentReports(reportsRes.data || [])
       setAppointments(apptsRes.data || [])
@@ -172,7 +174,7 @@ export default function Dashboard() {
         <StatCard icon={FileText} label="Total Reports" value={stats.total} gradient="bg-teal-gradient" />
         <StatCard icon={CheckCircle2} label="Completed" value={stats.completed} gradient="bg-emerald-gradient" />
         <StatCard icon={Clock} label="Pending" value={stats.pending} gradient="bg-amber-gradient" />
-        <StatCard icon={Activity} label="Health Score" value="88" gradient="bg-slate-gradient" />
+        <StatCard icon={Activity} label="Health Score" value="0" gradient="bg-slate-gradient" />
       </div>
 
       <div className="card overflow-hidden rounded-2xl">
