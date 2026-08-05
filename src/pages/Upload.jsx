@@ -1,19 +1,37 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { UploadCloud, FileText, X, Loader2, CheckCircle2, AlertCircle, Stethoscope, ArrowLeft, FileImage } from 'lucide-react'
+import {
+  UploadCloud, FileText, X, CheckCircle2, AlertCircle,
+  Stethoscope, ArrowLeft, FileImage,
+} from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs'
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url'
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
-const serviceCategories = ['General Health','Dental Care','Eye Care','Cardiology','Neurology','Nutrition','Laboratory','Radiology','Orthopedics','Medication Information']
+const serviceCategories = [
+  'Auto Detect',
+  'General Health',
+  'Dental Care',
+  'Eye Care',
+  'Cardiology',
+  'Neurology',
+  'Nutrition',
+  'Laboratory',
+  'Radiology',
+  'Orthopedics',
+  'Medication Information',
+]
 
 export default function Upload() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const fileInputRef = useRef(null)
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
-  const [category, setCategory] = useState('General Health')
+  const [category, setCategory] = useState('Auto Detect')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [statusText, setStatusText] = useState('')
@@ -23,14 +41,27 @@ export default function Upload() {
   const handleFileSelect = useCallback((selectedFile) => {
     if (!selectedFile) return
     const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!validTypes.includes(selectedFile.type)) { setError('Please upload a PDF or image file (PNG, JPEG, WebP).'); return }
-    if (selectedFile.size > 10 * 1024 * 1024) { setError('File size must be under 10 MB.'); return }
+    if (!validTypes.includes(selectedFile.type)) {
+      setError('Please upload a PDF or image file (PNG, JPEG, WebP).')
+      return
+    }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError('File size must be under 10 MB.')
+      return
+    }
     setError('')
     setFile(selectedFile)
     setPreview(selectedFile.type.startsWith('image/') ? URL.createObjectURL(selectedFile) : null)
   }, [])
 
-  const handleDrop = useCallback((e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files[0]) }, [handleFileSelect])
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault()
+      setDragOver(false)
+      handleFileSelect(e.dataTransfer.files[0])
+    },
+    [handleFileSelect]
+  )
 
   async function fileToImageBase64(selectedFile) {
     if (selectedFile.type.startsWith('image/')) {
@@ -55,14 +86,23 @@ export default function Upload() {
 
   const handleUpload = async () => {
     if (!file) return
+    if (!user?.id) {
+      setError('You must be signed in to upload a report.')
+      return
+    }
+
     setUploading(true)
     setError('')
     setProgress(10)
     setStatusText('Uploading file…')
 
     try {
-      const filePath = `${Date.now()}-${file.name}`
-      const { error: uploadError } = await supabase.storage.from('medical-reports').upload(filePath, file)
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const filePath = `${user.id}/${Date.now()}-${safeName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('medical-reports')
+        .upload(filePath, file)
       if (uploadError) throw uploadError
       setProgress(35)
 
@@ -72,11 +112,16 @@ export default function Upload() {
       const { data: reportRow, error: dbError } = await supabase
         .from('medical_reports')
         .insert({
+          user_id: user.id, // REQUIRED
           file_name: file.name,
           file_url: urlData.publicUrl,
-          report_type: category.toLowerCase().replace(/\s+/g, '_'),
-          service_category: category,
+          report_type:
+            category === 'Auto Detect'
+              ? 'auto'
+              : category.toLowerCase().replace(/\s+/g, '_'),
+          service_category: category === 'Auto Detect' ? null : category,
           status: 'pending',
+          upload_date: new Date().toISOString(),
         })
         .select('id')
         .single()
@@ -88,17 +133,29 @@ export default function Upload() {
       setProgress(70)
 
       setStatusText('Analyzing with AI…')
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-report`
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ reportId: reportRow.id, imageBase64, serviceCategory: category }),
+        body: JSON.stringify({
+          reportId: reportRow.id,
+          imageBase64,
+          // Only send category if user chose one; otherwise AI detects it
+          serviceCategory: category === 'Auto Detect' ? null : category,
+          fileName: file.name,
+        }),
       })
+
       const result = await response.json()
-      if (result.error) throw new Error(result.error)
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Analysis failed. Please try again.')
+      }
 
       setProgress(100)
       setStatusText('Done!')
@@ -108,6 +165,7 @@ export default function Upload() {
       setError(err.message || 'Failed to upload and analyze. Please try again.')
       setUploading(false)
       setProgress(0)
+      setStatusText('')
     }
   }
 
@@ -116,6 +174,7 @@ export default function Upload() {
     setPreview(null)
     setProgress(0)
     setError('')
+    setStatusText('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -123,19 +182,54 @@ export default function Upload() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6 px-4 sm:px-0 animate-fade-in">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-sky-700">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-sky-700"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to Dashboard
       </Link>
 
-      <div><h1 className="text-xl sm:text-2xl font-bold text-slate-900">Upload Medical Report</h1><p className="mt-1 text-sm text-slate-500">Add a document and get an AI-generated explanation.</p></div>
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Upload Medical Report</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Add a document and get an AI-generated explanation.
+        </p>
+      </div>
 
-      {error && <div className="flex items-start gap-2.5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 animate-fade-in"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>{error}</span></div>}
+      {error && (
+        <div className="flex items-start gap-2.5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 animate-fade-in">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {!file && (
-        <div onDragOver={(e) => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()} className={`card flex cursor-pointer flex-col items-center gap-3 sm:gap-4 p-6 sm:p-12 text-center transition-all ${dragOver ? 'border-sky-400 bg-sky-50' : 'hover:border-sky-300 hover:bg-slate-50'}`}>
-          <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-sky-50"><UploadCloud className="h-7 w-7 sm:h-8 sm:w-8 text-sky-700" /></div>
-          <div><p className="font-semibold text-slate-700">Drop your file here or click to browse</p><p className="mt-1 text-sm text-slate-400">PDF, PNG, JPEG, or WebP — max 10 MB</p></div>
-          <input ref={fileInputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(e) => handleFileSelect(e.target.files[0])} className="hidden" />
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`card flex cursor-pointer flex-col items-center gap-3 sm:gap-4 p-6 sm:p-12 text-center transition-all ${
+            dragOver ? 'border-sky-400 bg-sky-50' : 'hover:border-sky-300 hover:bg-slate-50'
+          }`}
+        >
+          <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-sky-50">
+            <UploadCloud className="h-7 w-7 sm:h-8 sm:w-8 text-sky-700" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-700">Drop your file here or click to browse</p>
+            <p className="mt-1 text-sm text-slate-400">PDF, PNG, JPEG, or WebP — max 10 MB</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            onChange={(e) => handleFileSelect(e.target.files[0])}
+            className="hidden"
+          />
         </div>
       )}
 
@@ -144,17 +238,38 @@ export default function Upload() {
           <div className="flex items-start justify-between gap-3 sm:gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50">
-                {isPdf ? <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-sky-700" /> : <FileImage className="h-5 w-5 sm:h-6 sm:w-6 text-sky-700" />}
+                {isPdf ? (
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-sky-700" />
+                ) : (
+                  <FileImage className="h-5 w-5 sm:h-6 sm:w-6 text-sky-700" />
+                )}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-800">{file.name}</p>
-                <p className="text-sm text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="text-sm text-slate-400">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
               </div>
             </div>
-            {!uploading && <button onClick={clearFile} className="shrink-0 rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><X className="h-5 w-5" /></button>}
+            {!uploading && (
+              <button
+                onClick={clearFile}
+                className="shrink-0 rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
           </div>
 
-          {preview && <div className="mt-4 overflow-hidden rounded-xl border border-slate-200"><img src={preview} alt="Preview" className="max-h-64 sm:max-h-80 w-full object-contain bg-slate-50" /></div>}
+          {preview && (
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+              <img
+                src={preview}
+                alt="Preview"
+                className="max-h-64 sm:max-h-80 w-full object-contain bg-slate-50"
+              />
+            </div>
+          )}
 
           {uploading && (
             <div className="mt-4 sm:mt-5">
@@ -163,7 +278,10 @@ export default function Upload() {
                 <span>{progress}%</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-600 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-600 transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             </div>
           )}
@@ -171,18 +289,42 @@ export default function Upload() {
           {!uploading && (
             <>
               <div className="mt-4 sm:mt-5">
-                <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700"><Stethoscope className="h-4 w-4 text-slate-400" /> Service Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-field cursor-pointer">{serviceCategories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}</select>
+                <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <Stethoscope className="h-4 w-4 text-slate-400" /> Service Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="input-field cursor-pointer"
+                >
+                  {serviceCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Use <strong>Auto Detect</strong> so AI identifies the real report type (recommended).
+                </p>
               </div>
-              <button onClick={handleUpload} className="btn-primary mt-4 sm:mt-5 w-full py-3"><CheckCircle2 className="h-4 w-4" /> Upload & Analyze</button>
+              <button onClick={handleUpload} className="btn-primary mt-4 sm:mt-5 w-full py-3">
+                <CheckCircle2 className="h-4 w-4" /> Upload & Analyze
+              </button>
             </>
           )}
         </div>
       )}
 
       <div className="card flex items-start gap-3 p-4 sm:p-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50"><AlertCircle className="h-5 w-5 text-sky-600" /></div>
-        <div><p className="text-sm font-medium text-slate-700">Your data is secure</p><p className="mt-0.5 text-sm text-slate-500">All uploads are encrypted and stored securely. Only you can access your medical reports.</p></div>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50">
+          <AlertCircle className="h-5 w-5 text-sky-600" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-slate-700">Your data is secure</p>
+          <p className="mt-0.5 text-sm text-slate-500">
+            All uploads are encrypted and stored securely. Only you can access your medical reports.
+          </p>
+        </div>
       </div>
     </div>
   )
