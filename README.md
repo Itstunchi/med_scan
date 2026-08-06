@@ -1,5 +1,9 @@
 # React + Vite
-
+## contributors
+-IFEANYICHUKWU PRECIOUS worked on the dashboard
+-HARMONY worked on the landing pages
+-JEFFREY worked on the login pages
+CHIDI worked on the settings
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
