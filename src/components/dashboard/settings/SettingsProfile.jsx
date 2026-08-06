@@ -24,62 +24,55 @@ const icons = {
   check: "M20 6 9 17l-5-5",
 };
 
+// Cartoon avatars – PNG (reliable, not blank)
 const avatarOptions = [
   {
-    id: "ai_avatar_male",
-    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663542132467/PHwbEaQKThFLMYdU.png",
+    id: "cartoon1",
+    url: "https://api.dicebear.com/10.x/avataaars/png?seed=Alex&size=200&backgroundColor=b6e3f4",
   },
   {
-    id: "ai_avatar_female",
-    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663542132467/YRioBJESWwIhOPvo.png",
+    id: "cartoon2",
+    url: "https://api.dicebear.com/10.x/avataaars/png?seed=Jordan&size=200&backgroundColor=c0aede",
   },
   {
-    id: "avatar1",
-    url: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon3",
+    url: "https://api.dicebear.com/10.x/avataaars/png?seed=Sam&size=200&backgroundColor=d1d4f9",
   },
   {
-    id: "avatar2",
-    url: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon4",
+    url: "https://api.dicebear.com/10.x/avataaars/png?seed=Taylor&size=200&backgroundColor=ffd5dc",
   },
   {
-    id: "avatar3",
-    url: "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon5",
+    url: "https://api.dicebear.com/10.x/lorelei/png?seed=Morgan&size=200&backgroundColor=b6e3f4",
   },
   {
-    id: "avatar4",
-    url: "https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon6",
+    url: "https://api.dicebear.com/10.x/lorelei/png?seed=Casey&size=200&backgroundColor=c0aede",
   },
   {
-    id: "avatar5",
-    url: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon7",
+    url: "https://api.dicebear.com/10.x/personas/png?seed=Riley&size=200&backgroundColor=d1d4f9",
   },
   {
-    id: "avatar6",
-    url: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon8",
+    url: "https://api.dicebear.com/10.x/personas/png?seed=Avery&size=200&backgroundColor=ffd5dc",
   },
   {
-    id: "avatar7",
-    url: "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon9",
+    url: "https://api.dicebear.com/10.x/notionists/png?seed=Quinn&size=200&backgroundColor=b6e3f4",
   },
   {
-    id: "avatar8",
-    url: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon10",
+    url: "https://api.dicebear.com/10.x/notionists/png?seed=Blake&size=200&backgroundColor=c0aede",
   },
   {
-    id: "avatar9",
-    url: "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon11",
+    url: "https://api.dicebear.com/10.x/big-smile/png?seed=Jamie&size=200&backgroundColor=d1d4f9",
   },
   {
-    id: "avatar10",
-    url: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-  },
-  {
-    id: "avatar11",
-    url: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-  },
-  {
-    id: "avatar12",
-    url: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+    id: "cartoon12",
+    url: "https://api.dicebear.com/10.x/big-smile/png?seed=Drew&size=200&backgroundColor=ffd5dc",
   },
 ];
 
@@ -120,7 +113,7 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState("ai_avatar_male");
+  const [selectedAvatar, setSelectedAvatar] = useState("cartoon1");
   const [savingAccount, setSavingAccount] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [accountMessage, setAccountMessage] = useState("");
@@ -137,7 +130,7 @@ export default function Settings() {
   }, [profile, user]);
 
   const nameUnchanged = fullName === (profile?.full_name || "");
-  const avatarUnchanged = selectedAvatar === (profile?.avatar_id || "ai_avatar_male");
+  const avatarUnchanged = selectedAvatar === (profile?.avatar_id || "cartoon1");
   const canSaveAccount = !nameUnchanged || !avatarUnchanged || !!photoPreview;
 
   const handleChangePhotoClick = () => setShowAvatarPicker(true);
@@ -320,10 +313,11 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* Cartoon avatar picker */}
           {showAvatarPicker && (
             <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-sm font-medium text-slate-700 mb-1">Choose a professional avatar</p>
-              <p className="text-xs text-slate-500 mb-4">Select a portrait or upload your own photo.</p>
+              <p className="text-sm font-medium text-slate-700 mb-1">Choose a cartoon avatar</p>
+              <p className="text-xs text-slate-500 mb-4">Select a style or upload your own photo.</p>
 
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                 {avatarOptions.map((opt) => (
@@ -341,8 +335,10 @@ export default function Settings() {
                       src={opt.url}
                       alt=""
                       className="h-full w-full object-cover"
+                      loading="lazy"
                       onError={(e) => {
-                        e.currentTarget.style.display = "none";
+                        e.currentTarget.src =
+                          "https://api.dicebear.com/10.x/avataaars/png?seed=fallback&size=200&backgroundColor=b6e3f4";
                       }}
                     />
                     {selectedAvatar === opt.id && (
@@ -594,6 +590,7 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
